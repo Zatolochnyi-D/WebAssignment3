@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>OpenID</title>
+</head>
+
+<body>
+    <p id="login status"></p>
+    <button id="login">Login</button>
+    <button id="get">Get Resource</button>
+    <p id="output"></p>
+
+    <script>
+        let loginStatus = document.getElementById("login status");
+        let loginButton = document.getElementById("login");
+        loginButton.addEventListener("click", login)
+        let getButton = document.getElementById("get");
+        getButton.addEventListener("click", getResource)
+        let output = document.getElementById("output");
+
+        let access_token = getCookies()["access_token"];
+
+        if (access_token == undefined) {
+            loginStatus.innerHTML = "Not logged in.";
+        } else {
+            loginStatus.innerHTML = "You are logged in.";
+        }
+
+
+
+        function login() {
+            window.location.href = "https://localhost:7101/login";
+        }
+
+        async function getResource() {
+            let response = await fetch('https://localhost:7101/getResource', {
+                headers: {
+                    "Authorization": access_token
+                }
+            });
+            if (response.status == 401) {
+                output.innerHTML = "You are not logged in.";
+            } else {
+                let json = await response.json();
+                output.innerHTML = JSON.stringify(json, null, 4);
+            }
+        }
+
+        function getCookies() {
+            let cookies = document.cookie;
+            cookies = cookies.split("; ");
+            cookies = cookies.map(cookie => cookie.split("="));
+            let dict = {};
+            cookies.forEach(array => dict[array[0]] = array[1]);
+            return dict;
+        }
+    </script>
+</body>
+
+</html>
