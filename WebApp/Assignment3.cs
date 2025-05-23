@@ -4,10 +4,22 @@ using System.Text.Json;
 
 namespace WebApp;
 
-public static class OAuthEndpoints
+public static class Assignment3Settings
 {
-    public static void UseOAuthEndpoints(this WebApplication app)
+    public static void UseAssignment3Settings(this WebApplication app)
     {
+        app.UseStaticFiles();
+        app.UseDefaultFiles();
+        app.UseHttpsRedirection();
+    }
+}
+
+public static class Assignment3Endpoints
+{
+    public static void MapAssignment3Endpoints(this WebApplication app)
+    {
+        app.MapGet("/", (HttpContext context) => context.Response.Redirect("/index.html"));
+
         app.MapGet("/login", (HttpContext context) =>
         {
             var redirectUrl = $"{Consts.CasdoorEndpoint}/login/oauth/authorize?client_id={Consts.ClientId}&response_type=code&redirect_uri={Consts.RedirectUri}&scope=openid profile email";

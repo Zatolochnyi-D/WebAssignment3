@@ -60,25 +60,33 @@
 
     <script>
         let open_button = document.getElementById('connect')
+        open_button.addEventListener('click', connect)
         let close_button = document.getElementById('close')
-        open_button.addEventListener('click', function () { socket.close() })
-        close_button.addEventListener('click', function () { socket.send("sdfdsfmdsfks") })
+        close_button.addEventListener('click', close)
 
-        const socket = new WebSocket('wss://localhost:7101/ws')
-        socket.onopen = function (event) {
-            console.log('Connected successfully')
+        let socket = null
+
+        function connect() {
+            if (socket != null) return
+            socket = new WebSocket('wss://localhost:7101/ws')
+            socket.onopen = function (event) {
+                console.log('Connected successfully')
+            }
+            socket.onmessage = function (event) {
+                console.log(event.data)
+            }
+            socket.onclose = function (event) {
+                console.log('Closed successfully')
+            }
+            socket.onerror = function (event) {
+                console.log(event)
+            }
         }
-        socket.onmessage = function (event) {
-            console.log(event.data)
-        }
-        socket.onclose = function (event) {
-            console.log('Closed successfully')
-        }
-        socket.onerror = function (event) {
-            console.log(event)
-        }
-        function sendMessage(message) {
-            socket.send(message)
+
+        function close() {
+            if (socket == null) return
+            socket.close()
+            socket = null
         }
     </script>
 </body>
