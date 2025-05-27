@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>OpenID</title>
+    <title>WS</title>
 </head>
 
 <body>
@@ -13,6 +13,8 @@
     <p id="output"></p>
     <button id="connect">Connect to WS</button>
     <button id="close">Disconnect from WS</button>
+    <p id="btc"></p>
+    <p id="eth"></p>
 
     <script>
         let loginStatus = document.getElementById("login status");
@@ -59,10 +61,18 @@
     </script>
 
     <script>
+        class SimplifiedTicker {
+            time
+            symbol
+            price
+            priceChargePercent
+        }
         let open_button = document.getElementById('connect')
         open_button.addEventListener('click', connect)
         let close_button = document.getElementById('close')
         close_button.addEventListener('click', close)
+        let btc_text = document.getElementById('btc')
+        let eth_text = document.getElementById('eth')
 
         let socket = null
 
@@ -73,7 +83,23 @@
                 console.log('Connected successfully')
             }
             socket.onmessage = function (event) {
-                console.log(event.data)
+                let data = JSON.parse(event.data)
+                let ticker = new SimplifiedTicker()
+                Object.assign(ticker, data)
+
+                let date = new Date(ticker.time);
+                let hours = date.getHours();
+                let minutes = '0' + date.getMinutes();
+                let seconds = '0' + date.getSeconds();
+                let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+                let message = `Price: ${ticker.price}, Change: ${ticker.priceChangePercent}%, time: ${formattedTime}`
+                if (ticker.symbol === 'BTCUSDT') {
+                    btc_text.innerHTML = 'BTC ' + message
+                }
+                if (ticker.symbol === 'ETHUSDT') {
+                    eth_text.innerHTML = 'ETH ' + message
+                }
             }
             socket.onclose = function (event) {
                 console.log('Closed successfully')

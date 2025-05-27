@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace WebApp;
 
 public static class Consts
@@ -8,4 +10,7 @@ public static class Consts
     public const string ClientSecret = "edfddea2f7258a679d5f44b4ed89032d3805b09e";
 
     public const string BinanceWebsocketsEndpoint = "wss://stream.binance.com:9443";
+    public const string BinanceStreamParamName = "/stream?streams=";
+    public static readonly ImmutableArray<string> Symbols = ["btc", "eth"];
+    public static readonly string CombinedSymbols = string.Join("/", Symbols.Select(x => $"{x}usdt@ticker"));
 }
