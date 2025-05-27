@@ -1,7 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Security;
 using System.Net.WebSockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 namespace WebApp;
 
 public class Program
@@ -9,6 +12,22 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.ConfigureEndpointDefaults(options =>
+            {
+                options.Protocols = HttpProtocols.Http1;
+            });
+            options.ConfigureHttpsDefaults(options =>
+            {
+                options.ServerCertificate = X509CertificateLoader.LoadPkcs12FromFile("Resources/localhost.p12", "changeit");
+                IEnumerable<TlsCipherSuite> rsaCiphers = Enum.GetNames<TlsCipherSuite>().Where(x => x.StartsWith("TLS_RSA")).Select(Enum.Parse<TlsCipherSuite>);
+#pragma warning disable CA1416 // Validate platform compatibility
+                options.OnAuthenticate = (_, sslOptions) => { sslOptions.CipherSuitesPolicy = new(rsaCiphers); };
+#pragma warning restore CA1416 // Validate platform compatibility
+            });
+        });
 
         var app = builder.Build();
 
@@ -24,9 +43,19 @@ public class Program
                 return;
             }
 
+            using var clientWs = await context.WebSockets.AcceptWebSocketAsync();
+            var token_buffer = new byte[1024 * 8];
+            var token_get_result = await clientWs.ReceiveAsync(new ArraySegment<byte>(token_buffer), CancellationToken.None);
+            var token = Encoding.UTF8.GetString(token_buffer, 0, token_get_result.Count);
+            var decoder = new JwtSecurityTokenHandler();
+            if (!decoder.CanReadToken(token))
+            {
+                await clientWs.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Authentication required", CancellationToken.None);
+                return;
+            }
+
             Console.WriteLine("Connection opened.");
 
-            using var clientWs = await context.WebSockets.AcceptWebSocketAsync();
             using var binanceWs = new ClientWebSocket();
             var target = Consts.BinanceWebsocketsEndpoint + Consts.BinanceStreamParamName + Consts.CombinedSymbols;
             await binanceWs.ConnectAsync(new Uri(target), CancellationToken.None);

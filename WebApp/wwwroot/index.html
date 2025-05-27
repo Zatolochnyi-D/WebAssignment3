@@ -80,7 +80,12 @@
             if (socket != null) return
             socket = new WebSocket('wss://localhost:7101/ws')
             socket.onopen = function (event) {
-                console.log('Connected successfully')
+                console.log('Connected')
+                if (getCookies()["access_token"] != undefined) {
+                    socket.send(getCookies()["access_token"])
+                } else {
+                    socket.send("")
+                }
             }
             socket.onmessage = function (event) {
                 let data = JSON.parse(event.data)
@@ -102,7 +107,7 @@
                 }
             }
             socket.onclose = function (event) {
-                console.log('Closed successfully')
+                console.log('Closed')
             }
             socket.onerror = function (event) {
                 console.log(event)
